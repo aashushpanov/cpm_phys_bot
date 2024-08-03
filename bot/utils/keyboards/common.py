@@ -1,15 +1,24 @@
-from aiogram.dispatcher import FSMContext
+from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.filters.callback_data import CallbackData
 
-from bot.menu.logic.menu_classes import MenuNode, MOVE_CALL
+import pandas as pd
+
+from menu.logic.menu_classes import MenuNode, MoveCall
 from utils.functions.functions import delete_message
 
 
-DELETE_KEYBOARD_CALL = CallbackData('del')
-CANCEL_EVENT_CALL = CallbackData('cancel_event')
-PAGE_KEYBOARD_MOVE_CALL = CallbackData('page_move', 'data')
-PAGE_KEYBOARD_CALL = CallbackData('pk', 'data')
+class DeleteKeyboardCall(CallbackData, prefix='del'):
+    pass
+
+class CancelEventCall(CallbackData, prefix='cancel_event'):
+    pass
+class PageKeyboardMoveCall(CallbackData, prefix='page_move'):
+    data: str
+
+class PageKeyboardCall(CallbackData, prefix='pk'):
+    data: str
 
 
 async def delete_keyboard(callback: CallbackQuery, state: FSMContext = None):
@@ -18,56 +27,58 @@ async def delete_keyboard(callback: CallbackQuery, state: FSMContext = None):
     await delete_message(callback.message)
 
 
-async def tree_menu_keyboard(menu_node: MenuNode, callback: CallbackQuery = None, data=None):
+async def tree_menu_keyboard(menu_node: MenuNode, callback: MoveCall = None, data=None):
     if callback is not None:
-        row_width = int(callback.data.split(':')[-1])
+        row_width = callback.width
     else:
         row_width = 1
-    markup = InlineKeyboardMarkup(row_width=row_width)
+    markup = InlineKeyboardBuilder()
 
     async for _, text, node_callback in menu_node.childs_data(callback=callback, data=data):
         if node_callback.__contains__('://'):
-            markup.insert(InlineKeyboardButton(text=text, url=node_callback))
+            markup.row(InlineKeyboardButton(text=text, url=node_callback))
         else:
-            markup.insert(InlineKeyboardButton(text=text, callback_data=node_callback))
+            markup.row(InlineKeyboardButton(text=text, callback_data=node_callback))
 
     if menu_node.parent:
-        markup.insert(
+        markup.add(
             InlineKeyboardButton(text="\U00002B05 Назад",
-                                 callback_data=MOVE_CALL.new(action='u', node=menu_node.id, data='', width=1)))
+                                 callback_data=MoveCall(action='u', node=menu_node.id, data='', width=1).pack()))
+    markup.adjust(row_width)
+    return markup.as_markup()
         
 
 def yes_no_keyboard(callback):
-    markup = InlineKeyboardMarkup()
+    markup = InlineKeyboardBuilder()
 
-    markup.insert(InlineKeyboardButton(text='\U00002705 Да', callback_data=callback))
-    markup.insert(InlineKeyboardButton(text='\U0000274C	Нет', callback_data=DELETE_KEYBOARD_CALL.new()))
+    markup.add(InlineKeyboardButton(text='\U00002705 Да', callback_data=callback))
+    markup.add(InlineKeyboardButton(text='\U0000274C Нет', callback_data=DeleteKeyboardCall().pack()))
 
-    return markup
-
-
-def cansel_keyboard():
-    markup = InlineKeyboardMarkup()
-    markup.insert(InlineKeyboardButton(text='\U0000274C Отмена', callback_data=CANCEL_EVENT_CALL.new()))
-    return markup
+    return markup.as_markup()
 
 
-def callbacks_keyboard(texts: list, callbacks: list, cansel_button: bool = False):
+def cancel_keyboard():
+    markup = InlineKeyboardBuilder()
+    markup.add(InlineKeyboardButton(text='\U0000274C Отмена', callback_data=CancelEventCall().pack()))
+    return markup.as_markup()
+
+
+def callbacks_keyboard(texts: list, callbacks: list, cancel_button: bool = False):
     if len(texts) != len(callbacks) and len(callbacks) != 0:
         raise KeyError
     button_dict = dict(zip(texts, callbacks))
-    markup = InlineKeyboardMarkup(row_width=1)
+    markup = InlineKeyboardBuilder()
     for text, callback in button_dict.items():
         if isinstance(callback, str) and isinstance(text, str):
             if callback.__contains__('://'):
-                markup.insert(InlineKeyboardButton(text=text, url=callback))
+                markup.add(InlineKeyboardButton(text=text, url=callback))
             else:
-                markup.insert(InlineKeyboardButton(text=text, callback_data=callback))
+                markup.add(InlineKeyboardButton(text=text, callback_data=callback))
         else:
             raise TypeError
-    if cansel_button:
-        markup.insert(InlineKeyboardButton(text='\U0000274C Отмена', callback_data=CANCEL_EVENT_CALL.new()))
-    return markup
+    if cancel_button:
+        markup.add(InlineKeyboardButton(text='\U0000274C Отмена', callback_data=CancelEventCall().pack()))
+    return markup.as_markup()
 
 
 def pages_keyboard(list_of_instance: pd.DataFrame, callback_column: str, text_column: str, page: int, height: int = 5):
@@ -97,18 +108,18 @@ def pages_keyboard(list_of_instance: pd.DataFrame, callback_column: str, text_co
     if list_of_instance.shape[0] < (page + 1) * height:
         last_page = True
     page_list = list_of_instance.iloc[height*page:top]
-    markup = InlineKeyboardMarkup(row_width=1)
+    markup = InlineKeyboardBuilder()
     for _, row in page_list.iterrows():
-        markup.insert(InlineKeyboardButton(text=row[text_column],
-                                           callback_data=PAGE_KEYBOARD_CALL.new(data=row[callback_column])))
+        markup.add(InlineKeyboardButton(text=row[text_column],
+                                           callback_data=PageKeyboardCall().new(data=row[callback_column])), width=1)
     left_btn = None
     right_btn = None
     if page != 0:
-        left_btn = InlineKeyboardButton(text='\U000025C0', callback_data=PAGE_KEYBOARD_MOVE_CALL.new(data='decr'))
+        left_btn = InlineKeyboardButton(text='\U000025C0', callback_data=PageKeyboardMoveCall(data='decr').pack())
     if not last_page:
-        right_btn = InlineKeyboardButton(text='\U000025B6', callback_data=PAGE_KEYBOARD_MOVE_CALL.new(data='incr'))
+        right_btn = InlineKeyboardButton(text='\U000025B6', callback_data=PageKeyboardMoveCall(data='incr').pack())
     if right_btn is None and left_btn is None:
-        return markup
+        return markup.as_markup()
     elif right_btn and left_btn:
         markup.row(left_btn, right_btn)
     else:
@@ -117,4 +128,4 @@ def pages_keyboard(list_of_instance: pd.DataFrame, callback_column: str, text_co
         else:
             btn = right_btn
         markup.row(btn)
-    return markup
+    return markup.as_markup()

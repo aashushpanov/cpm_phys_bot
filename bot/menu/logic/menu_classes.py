@@ -1,7 +1,11 @@
 from aiogram.filters.callback_data import CallbackData
 
 
-MOVE_CALL = CallbackData('move', 'action', 'node', 'data', 'width')
+class MoveCall(CallbackData, prefix='move'):
+    action: str
+    node: str
+    data: str
+    width: int
 
 
 class BaseNode:
@@ -70,7 +74,7 @@ class MenuNode(BaseNode):
     def set_child(self, child):
         child._id = self._id + '_' + str(len(self._childs))
         if child.callback is None:
-            child._callback = MOVE_CALL.new(action='d', node=child.id, data='', width=1)
+            child._callback = MoveCall(action='d', node=child.id, data='', width=1).pack()
         self._childs.append(child)
         child._parent = self
 

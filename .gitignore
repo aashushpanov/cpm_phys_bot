@@ -1,4 +1,5 @@
 *.env
+*.pyc
 /.idea/**
 /bot/service_files/
 /env_vars/
