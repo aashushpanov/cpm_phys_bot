@@ -1,4 +1,10 @@
+import enum
 from aiogram.filters.callback_data import CallbackData
+
+
+class NodeType(enum.Enum):
+    SIMPLE = 1
+    GENERATOR = 2
 
 
 class MoveCall(CallbackData, prefix='move'):
@@ -9,15 +15,39 @@ class MoveCall(CallbackData, prefix='move'):
 
 
 class BaseNode:
-    def __init__(self, id: str, parent, callback):
-        self._id = id
+    def __init__(self, _id: str, parent, callback):
+        self._id = _id
         self._childs = []
         self._parent = parent
         self._callback = callback
+        self._info = None
+
+    def childs(self):
+        result = {}
+        for child in self._childs:
+            result.update({child.id: child})
+        return result
+
+    def all_childs(self, result=None):
+        if result is None:
+            result = {}
+        childs = self.childs()
+        result.update(childs)
+        for child in self._childs:
+            result = child.all_childs(result)
+        return result
+
+    @staticmethod
+    def have_childs():
+        return True
 
     @property
     def id(self):
         return self._id if self._id else 0
+    
+    @property
+    def info(self):
+        return self._info
 
     @property
     def parent(self):
@@ -28,11 +58,30 @@ class BaseNode:
         return self._callback
 
 
+class InfoNode(BaseNode):
+    def __init__(self, text, info, callback=None, parent=None, _id=None):
+        super().__init__(_id=_id or 'admin', parent=parent, callback=callback)
+        self._text = text
+        self._info = info
+    
+    @staticmethod
+    def have_childs():
+        return False
+    
+    @property
+    def text(self):
+        return self._text
+
+    @property
+    def info(self):
+        return self._info
+
+
 class MenuNode(BaseNode):
-    def __init__(self, text: str = None, callback=None, parent=None, id=None, row_width=1):
-        super().__init__(id=id or 'admin', parent=parent, callback=callback)
+    def __init__(self, text: str = None, callback=None, parent=None, _id=None, row_width=1):
         self._text = text
         self._row_width = row_width
+        super().__init__(_id=_id or 'admin', parent=parent, callback=callback)
 
     @property
     def text(self):
@@ -57,24 +106,14 @@ class MenuNode(BaseNode):
                     return child
         raise KeyError
 
-    def childs(self):
-        result = {}
-        for child in self._childs:
-            result.update({child.id: child})
-        return result
-
-    def all_childs(self, result=None):
-        if result is None:
-            result = {}
-        result.update(self.childs())
-        for child in self._childs:
-            result = child.all_childs(result)
-        return result
-
     def set_child(self, child):
         child._id = self._id + '_' + str(len(self._childs))
         if child.callback is None:
-            child._callback = MoveCall(action='d', node=child.id, data='', width=1).pack()
+            match child:
+                case InfoNode():
+                    child._callback = MoveCall(action='i', node=child.id, data='', width=1).pack()
+                case _:
+                    child._callback = MoveCall(action='d', node=child.id, data='', width=1).pack()
         self._childs.append(child)
         child._parent = self
 
@@ -95,8 +134,8 @@ class MenuNode(BaseNode):
 
 
 class NodeGenerator(MenuNode):
-    def __init__(self, text, func, id=None, reg_nodes=None, parent=None, callback=None):
-        super().__init__(id=id if id else 'gen', parent=parent, callback=callback)
+    def __init__(self, text, func, _id=None, reg_nodes=None, parent=None, callback=None):
+        super().__init__(_id=_id if id else 'gen', parent=parent, callback=callback)
         if reg_nodes is None:
             reg_nodes = []
         self._text = text
@@ -118,14 +157,14 @@ class NodeGenerator(MenuNode):
     def append(self, node):
         self._reg_nodes.append(node)
 
-    def add_blind_node(self, node_id, type='simple', func=None, row_width=1, text=None):
+    def add_blind_node(self, node_id, type: NodeType=NodeType.SIMPLE, func=None, row_width=1, text=None):
         node_id = self.id + '_' + node_id
-        if type == 'simple':
+        if type == NodeType.SIMPLE:
             self._blind_node = BlindNode(node_id, self, row_width=row_width)
-        if type == 'generator':
+        if type == NodeType.GENERATOR:
             if text is None:
                 text = 'Меню'
-            self._blind_node = NodeGenerator(text=text, func=func, id=node_id)
+            self._blind_node = NodeGenerator(text=text, func=func, _id=node_id)
         self._blind_node._parent = self
 
     def set_sub_child(self, sub_child):
@@ -152,7 +191,7 @@ class NodeGenerator(MenuNode):
 
 class BlindNode(MenuNode):
     def __init__(self, node_id, parent, row_width=1):
-        super().__init__(id=node_id, parent=parent, callback=None, row_width=row_width)
+        super().__init__(_id=node_id, parent=parent, callback=None, row_width=row_width)
 
     def childs(self):
         result = {}

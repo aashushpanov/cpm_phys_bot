@@ -1,0 +1,12 @@
+FROM nickgryg/alpine-pandas
+
+WORKDIR /usr/src/bot
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 17125:17125
+
+CMD [ "python", "./bot.py" ]

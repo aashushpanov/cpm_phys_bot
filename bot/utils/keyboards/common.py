@@ -34,11 +34,12 @@ async def tree_menu_keyboard(menu_node: MenuNode, callback: MoveCall = None, dat
         row_width = 1
     markup = InlineKeyboardBuilder()
 
-    async for _, text, node_callback in menu_node.childs_data(callback=callback, data=data):
-        if node_callback.__contains__('://'):
-            markup.row(InlineKeyboardButton(text=text, url=node_callback))
-        else:
-            markup.row(InlineKeyboardButton(text=text, callback_data=node_callback))
+    if menu_node.have_childs():
+        async for _, text, node_callback in menu_node.childs_data(callback=callback, data=data):
+            if type(node_callback) == str and node_callback.__contains__('://'):
+                markup.row(InlineKeyboardButton(text=text, url=node_callback))
+            else:
+                markup.row(InlineKeyboardButton(text=text, callback_data=node_callback))
 
     if menu_node.parent:
         markup.add(

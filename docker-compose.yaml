@@ -1,0 +1,7 @@
+services:
+  cpm_bot:
+    build: bot/
+    env_file:
+      - env_vars/cpm_bot.env
+    image: aashushpanov/my_repo:cmp_bot
+    container_name: cmp_bot
