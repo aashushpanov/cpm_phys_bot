@@ -21,7 +21,8 @@ def database(url=None):
     #     host=config.HOST,
     #     dbname=config.DATABASE,
     #     user=config.USER,
-    #     passwd=config.PASSWORD
+    #     password=config.PASSWORD,
+    #     port=config.PORT
     # )
     cur = conn.cursor()
     status = Status.OK

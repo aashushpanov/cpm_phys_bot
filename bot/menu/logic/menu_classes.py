@@ -135,12 +135,13 @@ class MenuNode(BaseNode):
 
 
 class NodeGenerator(MenuNode):
-    def __init__(self, text, func, _id=None, reg_nodes=None, parent=None, callback=None):
+    def __init__(self, text, func, info=None, _id=None, reg_nodes=None, parent=None, callback=None):
         super().__init__(_id=_id if id else 'gen', parent=parent, callback=callback)
         if reg_nodes is None:
             reg_nodes = []
         self._text = text
         self._func = func
+        self._info = info
         self._reg_nodes = reg_nodes
         self._sub_childs = []
         self._blind_node = None
