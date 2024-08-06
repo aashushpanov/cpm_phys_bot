@@ -12,7 +12,7 @@ async def list_menu(callback: types.CallbackQuery | types.Message, callback_data
     match callback:
         case types.Message():
             markup = await tree_menu_keyboard(menu)
-            await callback.answer(title, reply_markup=markup)
+            await callback.answer(title, reply_markup=markup, parse_mode="MarkdownV2")
         case types.CallbackQuery():
             await callback.answer()
             if callback_data.action == "d":
@@ -28,4 +28,5 @@ async def list_menu(callback: types.CallbackQuery | types.Message, callback_data
                 text = next_node.info
             else:
                 text = next_node.text
-            await callback.message.edit_text(text=text, reply_markup=markup)
+            text = text.replace('.', '\.').replace('(', '\(').replace(')', '\)')
+            await callback.message.edit_text(text=text, reply_markup=markup, parse_mode="MarkdownV2")
