@@ -78,9 +78,10 @@ class InfoNode(BaseNode):
 
 
 class MenuNode(BaseNode):
-    def __init__(self, text: str = None, callback=None, parent=None, _id=None, row_width=1):
+    def __init__(self, text: str = None, info=None, callback=None, parent=None, _id=None, row_width=1):
         self._text = text
         self._row_width = row_width
+        self._info = info
         super().__init__(_id=_id or 'admin', parent=parent, callback=callback)
 
     @property

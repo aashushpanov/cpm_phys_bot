@@ -8,9 +8,6 @@ from data.texts.about import text as about_text
 class NoImplementCall(CallbackData, prefix='no_implement'):
     pass
 
-class AboutCall(CallbackData, prefix='about'):
-    pass
-
 
 def set_user_menu(main_node=None):
     # main_menu
@@ -21,9 +18,9 @@ def set_user_menu(main_node=None):
 
     user_menu.set_childs([
         InfoNode('О нас', info=about_text),
-        NodeGenerator('Наши курсы', func=show_events),
-        MenuNode('Зарегистрироваться', callback=NoImplementCall().pack()),
-        MenuNode('Подписаться на обновления'),
+        NodeGenerator('Наши курсы', info='Предлагаем Вам ознакомиться с нашими актуальными курсами👇', func=show_events),
+        MenuNode('Зарегистрироваться на курсы', info='Выберите курс, который Вас заинтересовал. По ссылке Вы сможете пройти записаться на него.', callback=NoImplementCall().pack()),
+        MenuNode('Подписаться на обновления', info='Подпишитесь на обновления и получайте первыми актуальную информацию о новостях проекта и курсах, анонсы новых мероприятий и бесплатные материалы. мероприятия'),
         MenuNode('Вопрос/Ответ'),
         MenuNode('Личный кабинет', callback=NoImplementCall().pack()),
         MenuNode('FAQ', callback=NoImplementCall().pack()),

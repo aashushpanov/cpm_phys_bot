@@ -25,3 +25,14 @@ async def event_options(node, **kwargs):
     node.text=text
     if reg_url:
         yield MenuNode(text="Основная информация", callback=reg_url)
+
+
+async def show_reg_urls(node, **kwargs):
+    callback = kwargs.pop('callback')
+    events = get_events()
+    if events.empty:
+        await callback.answer('Событий нет', show_alert=True)
+    for _, event in events.iterrows():
+        name = event['name']
+        reg_url = event['reg_url']
+        yield MenuNode(text=name, callback=reg_url)
