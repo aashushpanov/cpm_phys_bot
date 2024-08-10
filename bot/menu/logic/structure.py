@@ -28,5 +28,5 @@ async def list_menu(callback: types.CallbackQuery | types.Message, callback_data
                 text = next_node.info
             else:
                 text = next_node.text
-            text = text.replace('.', '\.').replace('(', '\(').replace(')', '\)')
+            text = text.replace('.', '\.').replace('(', '\(').replace(')', '\)').replace('-', '\-')
             await callback.message.edit_text(text=text, reply_markup=markup, parse_mode="MarkdownV2")

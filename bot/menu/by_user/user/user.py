@@ -5,8 +5,13 @@ from .generators import show_events, event_options, show_reg_urls
 
 from data.texts.about import text as about_text
 
+
 class NoImplementCall(CallbackData, prefix='no_implement'):
     pass
+
+
+class HelpCallback(CallbackData, prefix='help'):
+    type: str
 
 
 def set_user_menu(main_node=None):
@@ -40,7 +45,7 @@ def set_user_menu(main_node=None):
     ])
 
     user_menu.child(text='Вопрос/Ответ').set_childs([
-        MenuNode('Задать вопрос', callback=NoImplementCall().pack())
+        MenuNode('Задать вопрос', callback=HelpCallback(type='q').pack())
     ])
 
     user_menu.child(text='Наши соцсети').set_childs([

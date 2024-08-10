@@ -1,5 +1,6 @@
 from aiogram import Router
 from aiogram import types
+from aiogram import F
 from aiogram.filters import Command
 
 import aiogram.filters.callback_data
@@ -12,7 +13,7 @@ menu_router = Router()
 def get_access(user_id):
     return 1
 
-@menu_router.message(Command('menu'))
+@menu_router.message(Command('menu'), F.chat.type == 'private')
 async def show_main_menu(message: types.Message, state=None):
     current_state = await state.get_state()
     if current_state:
