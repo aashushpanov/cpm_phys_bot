@@ -7,7 +7,7 @@ from data import config
 
 class Status(enum.Enum):
     OK = 1
-    ERROR = 2
+    ERROR = 0
 
 
 @contextlib.contextmanager

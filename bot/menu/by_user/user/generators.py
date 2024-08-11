@@ -17,14 +17,15 @@ async def show_events(node, **kwargs):
 
 
 async def event_options(node, **kwargs):
+    from .user import NoImplementCall
     callback = kwargs.pop('callback')
     event_id = callback.data
     event = get_event(event_id)
     text = event.description
     reg_url = event.reg_url
     node.text=text
-    if reg_url:
-        yield MenuNode(text="Основная информация", callback=reg_url)
+    callback = reg_url if reg_url else NoImplementCall().pack()
+    yield MenuNode(text="Регистрация", callback=callback)
 
 
 async def show_reg_urls(node, **kwargs):
