@@ -29,6 +29,7 @@ async def event_options(node, **kwargs):
 
 
 async def show_reg_urls(node, **kwargs):
+    from .user import NoImplementCall
     callback = kwargs.pop('callback')
     events = get_events()
     if events.empty:
@@ -36,4 +37,5 @@ async def show_reg_urls(node, **kwargs):
     for _, event in events.iterrows():
         name = event['name']
         reg_url = event['reg_url']
-        yield MenuNode(text=name, callback=reg_url)
+        callback = reg_url if reg_url else NoImplementCall().pack()
+        yield MenuNode(text=name, callback=callback)

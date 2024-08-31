@@ -1,4 +1,6 @@
 import enum
+
+from aiogram import types
 from aiogram.filters.callback_data import CallbackData
 
 
@@ -15,12 +17,18 @@ class MoveCall(CallbackData, prefix='move'):
 
 
 class BaseNode:
-    def __init__(self, _id: str, parent, callback):
+    def __init__(self, _id: str, text, parent, callback, photo_id, info):
         self._id = _id
         self._childs = []
+        self._text = text
         self._parent = parent
         self._callback = callback
-        self._info = None
+        self._photo_id = photo_id
+        self._info = info
+        if photo_id:
+            self._photo = types.input_media_photo.InputMediaPhoto(media=photo_id, caption=self._info)
+        else:
+            self._photo = None
 
     def childs(self):
         result = {}
@@ -48,6 +56,14 @@ class BaseNode:
     @property
     def info(self):
         return self._info
+    
+    @property
+    def text(self):
+        return self._text
+
+    @text.setter
+    def text(self, text):
+        self._text = text
 
     @property
     def parent(self):
@@ -57,40 +73,28 @@ class BaseNode:
     def callback(self):
         return self._callback
 
+    @property
+    def photo_id(self):
+        return self._photo_id
+    
+    @property
+    def photo(self):
+        return self._photo
+
 
 class InfoNode(BaseNode):
-    def __init__(self, text, info, callback=None, parent=None, _id=None):
-        super().__init__(_id=_id or 'admin', parent=parent, callback=callback)
-        self._text = text
-        self._info = info
+    def __init__(self, text, info, callback=None, parent=None, _id=None, photo_id=None):
+        super().__init__(_id=_id or 'admin', parent=parent, callback=callback, photo_id=photo_id, text=text, info=info)
     
     @staticmethod
     def have_childs():
         return False
-    
-    @property
-    def text(self):
-        return self._text
-
-    @property
-    def info(self):
-        return self._info
 
 
 class MenuNode(BaseNode):
-    def __init__(self, text: str = None, info=None, callback=None, parent=None, _id=None, row_width=1):
-        super().__init__(_id=_id or 'admin', parent=parent, callback=callback)
-        self._text = text
+    def __init__(self, text: str = None, info=None, photo_id=None, callback=None, parent=None, _id=None, row_width=1):
+        super().__init__(_id=_id or 'admin', parent=parent, callback=callback, photo_id=photo_id, text=text, info=info)
         self._row_width = row_width
-        self._info = info
-
-    @property
-    def text(self):
-        return self._text
-
-    @text.setter
-    def text(self, text):
-        self._text = text
 
     async def childs_data(self, **kwargs):
         for child in self._childs:
@@ -135,13 +139,11 @@ class MenuNode(BaseNode):
 
 
 class NodeGenerator(MenuNode):
-    def __init__(self, text, func, info=None, _id=None, reg_nodes=None, parent=None, callback=None):
-        super().__init__(_id=_id if id else 'gen', parent=parent, callback=callback)
+    def __init__(self, text, func, info=None, photo_id=None, _id=None, reg_nodes=None, parent=None, callback=None):
+        super().__init__(_id=_id if id else 'gen', parent=parent, callback=callback, info=info, text=text, photo_id=photo_id)
         if reg_nodes is None:
             reg_nodes = []
-        self._text = text
         self._func = func
-        self._info = info
         self._reg_nodes = reg_nodes
         self._sub_childs = []
         self._blind_node = None
