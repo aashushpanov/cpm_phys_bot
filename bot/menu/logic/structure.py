@@ -32,11 +32,9 @@ async def list_menu(callback: types.CallbackQuery | types.Message, callback_data
                 text = next_node.info
             else:
                 text = next_node.text
-            text = text.replace('.', '\.').replace('(', '\(').replace(')', '\)').replace('-', '\-')
             if next_node.photo:
-                await callback.message.edit_media(media=next_node.photo, reply_markup=markup)
+                await callback.message.edit_media(media=next_node.photo, reply_markup=markup, parse_mode="MarkdownV2")
             elif callback.message.caption:
                 await callback.message.edit_caption(caption=text, reply_markup=markup, parse_mode="MarkdownV2")
             else:
                 await callback.message.edit_text(text=text, reply_markup=markup, parse_mode="MarkdownV2")
-    

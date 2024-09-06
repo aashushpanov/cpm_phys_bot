@@ -26,7 +26,7 @@ class BaseNode:
         self._photo_id = photo_id
         self._info = info
         if photo_id:
-            self._photo = types.input_media_photo.InputMediaPhoto(media=photo_id, caption=self._info)
+            self._photo = types.input_media_photo.InputMediaPhoto(media=photo_id, caption=self._info, parse_mode="MarkdownV2")
         else:
             self._photo = None
 
